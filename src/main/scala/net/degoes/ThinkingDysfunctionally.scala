@@ -18,6 +18,13 @@ object ThinkingDysfunctionally extends App {
   /**
    * The invitation service. Uses constructor-based dependency injection to 
    * inject the dependencies.
+   * 
+   * The following problems have been reported in connection with the 
+   * `InvitationService`:
+   * 
+   * 1. The thread pool for HTTP requests often becomes exhausted.
+   * 2. Errors that happen in the service don't always make it higher.
+   * 3. The social and email services are randomly overloaded with requests.
    */
   class InvitationService(logging: Logging, social: Social, auth: Auth, email: Email) {
     /**
@@ -41,7 +48,7 @@ object ThinkingDysfunctionally extends App {
       userId match {
         case Failure(t) => 
           logging.log(s"Failed to log in $userId")
-          
+
           throw t 
 
         case Success(userId) =>
@@ -55,7 +62,7 @@ object ThinkingDysfunctionally extends App {
 
               // For each friend, get their profile and try to send them an email:
               friends.foreach { friendId =>
-                // Send emails in parallel:
+                // Get profiles & send emails in parallel:
                 Future {
                   if (counter.incrementAndGet() == friends.length) {
                     // Complete the promise if we notified all the friends:
