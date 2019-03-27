@@ -6,16 +6,18 @@ import scalaz.zio.console._
 import Common._
 
 object ThinkingFunctionally extends App {
+  import functional._
+  import logging._
+  import social._
+  import auth._
+  import email._
 
-  def run(args: List[String]) =
-    myAppLogic.fold(_ => 1, _ => 0)
+  def run(args: List[String]) = putStrLn("Hello World!").fold(_ => 1, _ => 0)
 
-  val myAppLogic =
-    for { 
-      _ <- putStrLn("Hello! What is your name?")
-      n <- getStrLn
-      _ <- putStrLn(s"Hello, ${n}, welcome to ZIO!")
-    } yield ()
+  type Services = Logging with Social with Auth with Email
+  
+  def inviteFriends(token: AuthToken): ZIO[Services, Throwable, Boolean] = 
+    ???
 }
 
 object functional {
