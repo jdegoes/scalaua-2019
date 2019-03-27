@@ -42,7 +42,9 @@ object ThinkingDysfunctionally extends App {
       val userId = auth.login(token)
 
       val promise = Promise[Unit]()
-      var notified = false
+
+      // Count how many friends we sent email to:
+      val counter = new AtomicInteger(0)
 
       // Try to log the user into the platform:
       userId match {
@@ -56,10 +58,8 @@ object ThinkingDysfunctionally extends App {
 
           // Get the profile of the user:
           social.getProfile(userId)(userProfile =>
-          // Get the friends of the user:
+            // Get the friends of the user:
             social.getFriends(userId).foreach { friends =>
-              val counter = new AtomicInteger(0)
-
               // For each friend, get their profile and try to send them an email:
               friends.foreach { friendId =>
                 // Get profiles & send emails in parallel:
@@ -74,9 +74,6 @@ object ThinkingDysfunctionally extends App {
                       s"A Message from ${userProfile.name}",
                       "Your friend has invited you to use our cool app!"
                     )
-
-                    // We notified at least one user:
-                    notified = true
                   }, _ => ()) // Ignore error
                 }
               }
@@ -86,7 +83,7 @@ object ThinkingDysfunctionally extends App {
 
       Await.result(promise.future, 60.seconds)
 
-      notified
+      counter.get > 0
     }
   }
 }
