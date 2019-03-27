@@ -35,7 +35,7 @@ object functional {
       }
     }
     def log(message: String): ZIO[Logging, Nothing, Unit] = 
-      ZIO.accessM(_.logging.log(message))
+      ZIO.accessM(_.logging log message)
   }
 
   object auth {
@@ -54,7 +54,7 @@ object functional {
       }
     }
     def login(token: AuthToken): ZIO[Auth, Throwable, UserID] = 
-      ZIO.accessM(_.auth.login(token))
+      ZIO.accessM(_.auth login token)
   }
 
   object social {
@@ -75,10 +75,10 @@ object functional {
       }
     }
     def getProfile(id: UserID): ZIO[Social, Throwable, UserProfile] = 
-      ZIO.accessM(_.social.getProfile(id))
+      ZIO.accessM(_.social getProfile id)
 
     def getFriends(id: UserID): ZIO[Social, Throwable, List[UserID]] =
-      ZIO.accessM(_.social.getFriends(id))
+      ZIO.accessM(_.social getFriends id)
   }
   
   object email {
