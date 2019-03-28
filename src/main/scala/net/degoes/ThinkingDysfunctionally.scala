@@ -29,6 +29,9 @@ object ThinkingDysfunctionally extends App {
    * 3. The social and email services are randomly overloaded with requests.
    */
   class InvitationService(services: Services) {
+    // Import all modules used by this service:
+    import services._
+
     /**
      * This function will authenticate the user using the specified `AuthToken`,
      * lookup the profile of the user, find all friends of the user, and for 
@@ -41,9 +44,6 @@ object ThinkingDysfunctionally extends App {
      * Returns the number of friends invited to the application.
      */
     def inviteFriends(token: AuthToken)(implicit ec: ExecutionContext): Int = {
-      // Import all modules:
-      import services._
-
       val userIdTry = auth.login(token)
 
       val promise = Promise[Unit]()
