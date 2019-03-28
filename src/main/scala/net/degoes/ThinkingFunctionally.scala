@@ -66,13 +66,17 @@ object ThinkingFunctionally extends App {
    * 
    * Questions for Thought:
    * 
-   *   1. Which issues were fixed automatically? Which required intention?
+   *   1. Which issues were fixed automatically? Which required attention?
    *   2. For those that required attention to fix, how are the solutions
    *      an improvement over the same solutions in the procedural version?
    *   3. How easy is will it be to change the functional version, versus
    *      the procedural version?
+   *   4. How many styles of computation are there in the procedural version?
+   *      How many in the functional version?
+   *   5. How much logic is devoted to error handling in the procedural version?
+   *      How much in the functional version?
    */
-  def inviteFriends(token: AuthToken): ZIO[Services, Throwable, Receipt] = 
+  def inviteFriends(token: AuthToken): ZIO[Services, Throwable, Receipt] =     
     ???
 
   /**
@@ -80,8 +84,13 @@ object ThinkingFunctionally extends App {
    * errors, or succeeded.
    */
   case class Receipt(value: Map[UserID, Option[Throwable]]) { self =>
-    final def append(that: Receipt): Receipt = 
+    final def ++ (that: Receipt): Receipt = 
       Receipt(self.value ++ that.value)
+
+    /**
+     * Returns how many emails succeeded.
+     */
+    final def succeeded: Int = value.values.filter(_ == None).size
   }
   object Receipt {
     // Constructs an empty receipt:
@@ -91,6 +100,8 @@ object ThinkingFunctionally extends App {
     // Constructs a receipt that tracks a failed send to the specified user:
     def failure(userId: UserID, t: Throwable): Receipt = Receipt(Map(userId -> Some(t)))
   }
+
+
 }
 
 object functional {
@@ -111,6 +122,7 @@ object functional {
       }
       trait Live extends Logging {
         val logging = new Service {
+          // Implement this using Common.log:
           def log(message: String): UIO[Unit] = ???
         }
       }
@@ -137,6 +149,7 @@ object functional {
       }
       trait Live extends Auth with Blocking {
         val auth = new Service {
+          // Implement this using Common.login:
           // Hint: blocking.interruptible
           def login(token: AuthToken): Task[UserID] = ???
         }
@@ -167,9 +180,11 @@ object functional {
       }
       trait Live extends Social {
         val social = new Service {
+          // Implement this using Common.getProfile:
           // Hint: ZIO.effectAsync
           def getProfile(id: UserID): Task[UserProfile] = ???
 
+          // Implement this using Common.getFriends:
           // Hint: ZIO.fromFuture
           def getFriends(id: UserID): Task[List[UserID]] = ???
         }
@@ -200,6 +215,7 @@ object functional {
       }
       trait Live extends Email with Blocking {
         val email = new Service {
+          // Implement this using Common.sendEmail:
           // Hint: blocking.interruptible
           def sendEmail(from: EmailAddress, to: EmailAddress)(subject: String, message: String): Task[Unit] = 
             ???
