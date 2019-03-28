@@ -74,8 +74,11 @@ object ThinkingFunctionally extends App {
       Receipt(self.value ++ that.value)
   }
   object Receipt {
+    // Constructs an empty receipt:
     def empty: Receipt = Receipt(Map())
+    // Constructs a receipt that tracks a successful send to the specified user:
     def success(userId: UserID): Receipt = Receipt(Map(userId -> None))
+    // Constructs a receipt that tracks a failed send to the specified user:
     def failure(userId: UserID, t: Throwable): Receipt = Receipt(Map(userId -> Some(t)))
   }
 }
@@ -122,12 +125,13 @@ object functional {
         // def login(token: AuthToken): Try[UserID]
         def login(token: AuthToken): Task[UserID]
       }
-      trait Live extends Auth {
+      trait Live extends Auth with Blocking {
         val auth = new Service {
+          // Hint: blocking.interruptible
           def login(token: AuthToken): Task[UserID] = ???
         }
       }
-      object Live extends Live
+      object Live extends Live with Blocking.Live
     }
     def login(token: AuthToken): ZIO[Auth, Throwable, UserID] = 
       ZIO.accessM(_.auth login token)
@@ -153,8 +157,10 @@ object functional {
       }
       trait Live extends Social {
         val social = new Service {
+          // Hint: ZIO.effectAsync
           def getProfile(id: UserID): Task[UserProfile] = ???
 
+          // Hint: ZIO.fromFuture
           def getFriends(id: UserID): Task[List[UserID]] = ???
         }
       }
@@ -182,8 +188,9 @@ object functional {
         // def sendEmail(from: EmailAddress, to: EmailAddress)(subject: String, message: String): Unit
         def sendEmail(from: EmailAddress, to: EmailAddress)(subject: String, message: String): Task[Unit]
       }
-      trait Live extends Email {
+      trait Live extends Email with Blocking {
         val email = new Service {
+          // Hint: blocking.interruptible
           def sendEmail(from: EmailAddress, to: EmailAddress)(subject: String, message: String): Task[Unit] = 
             ???
         }
