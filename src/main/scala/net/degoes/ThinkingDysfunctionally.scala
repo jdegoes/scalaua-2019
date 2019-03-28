@@ -22,7 +22,7 @@ object ThinkingDysfunctionally extends App {
    * The following problems have been reported in connection with the 
    * `InvitationService`:
    * 
-   * 1. The thread pool for HTTP requests often becomes exhausted.
+   * 1. Two thread pools are becoming exhausted non-deterministically.
    * 2. Errors that happen in the service don't always make it higher.
    * 3. The social and email services are randomly overloaded with requests.
    */
@@ -36,9 +36,9 @@ object ThinkingDysfunctionally extends App {
      * The function will return when it is done sending all the emails. If there 
      * is an error along the way, the function will throw some exception.
      * 
-     * Returns `true` if at least one friend was invited.
+     * Returns the number of friends invited to the application.
      */
-    def inviteFriends(token: AuthToken)(implicit ec: ExecutionContext): Boolean = {
+    def inviteFriends(token: AuthToken)(implicit ec: ExecutionContext): Int = {
       val userId = auth.login(token)
 
       val promise = Promise[Unit]()
@@ -83,7 +83,7 @@ object ThinkingDysfunctionally extends App {
 
       Await.result(promise.future, 60.seconds)
 
-      counter.get > 0
+      counter.get
     }
   }
 }

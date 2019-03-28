@@ -2,10 +2,23 @@ package net.degoes
 
 import scalaz.zio._
 import scalaz.zio.console._
+import scalaz.zio.blocking._
 
 import Common._
 
 /**
+ * Procedural effects do; functional effects describe.
+ * 
+ * Procedural effect:
+ * 
+ *   def println(line: String): Unit 
+ * 
+ * Functional effect:
+ * 
+ *   def println(line: String): Task[Unit]
+ * 
+ * where `case class Task[A](unsafeRun: () => A)`
+ * 
  * ZIO's only functional effect type: 
  * 
  *    ZIO[-R, +E, +A]
@@ -14,7 +27,7 @@ import Common._
  * 
  *    R => Either[E, A]
  * 
- * Type aliases:
+ * ZIO has type aliases to simplify common use cases:
  * 
  *    type   UIO[+A] = ZIO[Any,   Nothing, A]
  *    type  Task[+A] = ZIO[Any, Throwable, A]
@@ -31,19 +44,40 @@ object ThinkingFunctionally extends App {
 
   def run(args: List[String]) = putStrLn("Hello World!").fold(_ => 1, _ => 0)
 
-  type Services = Logging with Social with Auth with Email
+  type Services = Logging with Social with Auth with Email with Blocking
 
   /**
    * Your mission, should you choose to accept it:
    * 
    * 1. Refactor the procedural/OOP code to its functional equivalent.
-   * 2. Fix thread pool exhaustion for HTTP requests.
+   * 2. Fix the two cases of thread pool exhaustion.
    * 4. Ensure errors that happen here always propagate upward.
-   * 5. Rate limit the social / email services per invocation.
+   * 5. Locally rate limit the social / email services to prevent overload.
    * 
+   * Questions for Thought:
+   * 
+   *   1. Which issues were fixed automatically? Which required intention?
+   *   2. For those that required attention to fix, how are the solutions
+   *      an improvement over the same solutions in the procedural version?
+   *   3. How easy is will it be to change the functional version, versus
+   *      the procedural version?
    */
-  def inviteFriends(token: AuthToken): ZIO[Services, Throwable, Boolean] = 
+  def inviteFriends(token: AuthToken): ZIO[Services, Throwable, Receipt] = 
     ???
+
+  /**
+   * Describes the result of an email invitation. Either it failed with some
+   * errors, or succeeded.
+   */
+  case class Receipt(value: Map[UserID, Option[Throwable]]) { self =>
+    final def append(that: Receipt): Receipt = 
+      Receipt(self.value ++ that.value)
+  }
+  object Receipt {
+    def empty: Receipt = Receipt(Map())
+    def success(userId: UserID): Receipt = Receipt(Map(userId -> None))
+    def failure(userId: UserID, t: Throwable): Receipt = Receipt(Map(userId -> Some(t)))
+  }
 }
 
 object functional {
@@ -62,8 +96,10 @@ object functional {
         // Old: def log(message: String): Unit 
         def log(message: String): UIO[Unit]
       }
-      trait Live extends Service {
-        def log(message: String): UIO[Unit] = ???
+      trait Live extends Logging {
+        val logging = new Service {
+          def log(message: String): UIO[Unit] = ???
+        }
       }
       object Live extends Live
     }
@@ -86,8 +122,10 @@ object functional {
         // def login(token: AuthToken): Try[UserID]
         def login(token: AuthToken): Task[UserID]
       }
-      trait Live extends Service {
-        def login(token: AuthToken): Task[UserID] = ???
+      trait Live extends Auth {
+        val auth = new Service {
+          def login(token: AuthToken): Task[UserID] = ???
+        }
       }
       object Live extends Live
     }
@@ -113,10 +151,12 @@ object functional {
         // def getFriends(id: UserID)(implicit ec: ExecutionContext): Future[List[UserID]]
         def getFriends(id: UserID): Task[List[UserID]]
       }
-      trait Live extends Service {
-        def getProfile(id: UserID): Task[UserProfile] = ???
+      trait Live extends Social {
+        val social = new Service {
+          def getProfile(id: UserID): Task[UserProfile] = ???
 
-        def getFriends(id: UserID): Task[List[UserID]] = ???
+          def getFriends(id: UserID): Task[List[UserID]] = ???
+        }
       }
       object Live extends Live
     }
@@ -142,9 +182,11 @@ object functional {
         // def sendEmail(from: EmailAddress, to: EmailAddress)(subject: String, message: String): Unit
         def sendEmail(from: EmailAddress, to: EmailAddress)(subject: String, message: String): Task[Unit]
       }
-      trait Live extends Service {
-        def sendEmail(from: EmailAddress, to: EmailAddress)(subject: String, message: String): Task[Unit] = 
-          ???
+      trait Live extends Email {
+        val email = new Service {
+          def sendEmail(from: EmailAddress, to: EmailAddress)(subject: String, message: String): Task[Unit] = 
+            ???
+        }
       }
     }
 
