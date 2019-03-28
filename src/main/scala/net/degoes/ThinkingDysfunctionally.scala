@@ -15,6 +15,8 @@ object ThinkingDysfunctionally extends App {
   import auth._
   import email._
 
+  type Services = Logging with Social with Auth with Email
+
   /**
    * The invitation service. Uses constructor-based dependency injection to 
    * inject the dependencies.
@@ -26,7 +28,7 @@ object ThinkingDysfunctionally extends App {
    * 2. Errors that happen in the service don't always make it higher.
    * 3. The social and email services are randomly overloaded with requests.
    */
-  class InvitationService(logging: Logging, social: Social, auth: Auth, email: Email) {
+  class InvitationService(services: Services) {
     /**
      * This function will authenticate the user using the specified `AuthToken`,
      * lookup the profile of the user, find all friends of the user, and for 
@@ -39,6 +41,9 @@ object ThinkingDysfunctionally extends App {
      * Returns the number of friends invited to the application.
      */
     def inviteFriends(token: AuthToken)(implicit ec: ExecutionContext): Int = {
+      // Import all modules:
+      import services._
+
       val userId = auth.login(token)
 
       val promise = Promise[Unit]()
@@ -91,59 +96,110 @@ object ThinkingDysfunctionally extends App {
 object dysfunctional {
   object logging {
     /**
-     * The logging service.
+     * The logging module.
      */
     trait Logging {
-      def log(message: String): Unit
+      def logging: Logging.Service 
     }
-    trait LoggingLive extends Logging {
-      def log(message: String): Unit = Common.log(message)
+    object Logging {
+      /**
+       * The logging service.
+       */
+      trait Service {
+        def log(message: String): Unit
+      }
+      /**
+       * Production implementation of the logging service.
+       */
+      trait Live extends Logging {
+        val logging = new Service {
+          def log(message: String): Unit = Common.log(message)
+        }
+      }
+      object Live extends Live
     }
-    object LoggingLive extends LoggingLive
   }
   object auth {
     /**
-     * The authentication service.
+     * The auth module.
      */
     trait Auth {
-      def login(token: AuthToken): Try[UserID]
+      def auth: Auth.Service
     }
-    trait AuthLive extends Auth {
-      def login(token: AuthToken): Try[UserID] = Common.login(token)
+    object Auth {
+      /**
+       * The auth service.
+       */
+      trait Service {
+        def login(token: AuthToken): Try[UserID]
+      }
+      /**
+       * Production implementation of the auth service.
+       */
+      trait Live extends Auth {
+        val auth = new Service {
+          def login(token: AuthToken): Try[UserID] = Common.login(token)
+        }
+      }
+      object Live extends Live
     }
-    object AuthLive extends AuthLive
   }
 
   object social {
-    /**
-     * The social service.
+     /**
+     * The social module.
      */
     trait Social {
-      def getProfile(id: UserID)(onSuccess: UserProfile => Unit, onFailure: Throwable => Unit): Unit
-
-      def getFriends(id: UserID)(implicit ec: ExecutionContext): Future[List[UserID]]
+      def social: Social.Service
     }
-    trait SocialLive extends Social {
-      def getProfile(id: UserID)(onSuccess: UserProfile => Unit, onFailure: Throwable => Unit): Unit =
-        Common.getProfile(id)(onSuccess, onFailure)
+    object Social {
+      /**
+       * The social service.
+       */
+      trait Service {
+        def getProfile(id: UserID)(onSuccess: UserProfile => Unit, onFailure: Throwable => Unit): Unit
 
-      def getFriends(id: UserID)(implicit ec: ExecutionContext): Future[List[UserID]] = 
-        Common.getFriends(id)
+        def getFriends(id: UserID)(implicit ec: ExecutionContext): Future[List[UserID]]
+      }
+      /**
+       * Production implementation of the social service.
+       */
+      trait Live extends Social {
+        val social = new Service {
+          def getProfile(id: UserID)(onSuccess: UserProfile => Unit, onFailure: Throwable => Unit): Unit =
+            Common.getProfile(id)(onSuccess, onFailure)
+
+          def getFriends(id: UserID)(implicit ec: ExecutionContext): Future[List[UserID]] = 
+            Common.getFriends(id)
+        }
+      }
+      object Live extends Live
     }
-    object SocialLive extends SocialLive
   }
 
   object email {
     /**
-     * The email service.
+     * The email module.
      */
     trait Email {
-      def sendEmail(from: EmailAddress, to: EmailAddress)(subject: String, message: String): Unit
+      def email: Email.Service 
     }
-    trait EmailLive extends Email {
-      def sendEmail(from: EmailAddress, to: EmailAddress)(subject: String, message: String): Unit = 
-        Common.sendEmail(from, to)(subject, message)
+    object Email {
+      /**
+       * The email service.
+       */
+      trait Service {
+        def sendEmail(from: EmailAddress, to: EmailAddress)(subject: String, message: String): Unit
+      }
+      /**
+       * Production implementation of the email service.
+       */
+      trait Live extends Email {
+        val email = new Service {
+          def sendEmail(from: EmailAddress, to: EmailAddress)(subject: String, message: String): Unit = 
+            Common.sendEmail(from, to)(subject, message)
+        }
+      }
     }
-    object EmailLive extends EmailLive
   }
 }

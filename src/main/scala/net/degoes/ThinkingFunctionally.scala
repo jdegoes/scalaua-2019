@@ -84,40 +84,26 @@ object ThinkingFunctionally extends App {
    * errors, or succeeded.
    */
   case class Receipt(value: Map[UserID, Option[Throwable]]) { self =>
-    final def ++ (that: Receipt): Receipt = 
+    final def |+| (that: Receipt): Receipt = 
       Receipt(self.value ++ that.value)
 
-    /**
-     * Returns how many emails succeeded.
-     */
     final def succeeded: Int = value.values.filter(_ == None).size
+    final def failures: List[Throwable] = value.values.collect { case Some(t) => t }.toList
   }
   object Receipt {
-    // Constructs an empty receipt:
     def empty: Receipt = Receipt(Map())
-    // Constructs a receipt that tracks a successful send to the specified user:
     def success(userId: UserID): Receipt = Receipt(Map(userId -> None))
-    // Constructs a receipt that tracks a failed send to the specified user:
     def failure(userId: UserID, t: Throwable): Receipt = Receipt(Map(userId -> Some(t)))
   }
-
-
 }
 
 object functional {
   object logging {
-    /**
-     * The logging module.
-     */
     trait Logging {
       def logging: Logging.Service 
     }
     object Logging {
-      /**
-       * The logging service.
-       */
       trait Service {
-        // Old: def log(message: String): Unit 
         def log(message: String): UIO[Unit]
       }
       trait Live extends Logging {
@@ -128,23 +114,17 @@ object functional {
       }
       object Live extends Live
     }
+
     def log(message: String): ZIO[Logging, Nothing, Unit] = 
       ZIO.accessM(_.logging log message)
   }
 
   object auth {
-    /**
-     * The auth module.
-     */
     trait Auth {
       def auth: Auth.Service
     }
     object Auth {
-      /**
-       * The auth service.
-       */
       trait Service {
-        // def login(token: AuthToken): Try[UserID]
         def login(token: AuthToken): Task[UserID]
       }
       trait Live extends Auth with Blocking {
@@ -156,26 +136,18 @@ object functional {
       }
       object Live extends Live with Blocking.Live
     }
+
     def login(token: AuthToken): ZIO[Auth, Throwable, UserID] = 
       ZIO.accessM(_.auth login token)
   }
 
   object social {
-    /**
-     * The social module.
-     */
     trait Social {
       def social: Social.Service
     }
     object Social {
-      /**
-       * The social service.
-       */
       trait Service {
-        // def getProfile(id: UserID)(onSuccess: UserProfile => Unit, onFailure: Throwable => Unit): Unit
         def getProfile(id: UserID): Task[UserProfile]
-
-        // def getFriends(id: UserID)(implicit ec: ExecutionContext): Future[List[UserID]]
         def getFriends(id: UserID): Task[List[UserID]]
       }
       trait Live extends Social {
@@ -191,6 +163,7 @@ object functional {
       }
       object Live extends Live
     }
+
     def getProfile(id: UserID): ZIO[Social, Throwable, UserProfile] = 
       ZIO.accessM(_.social getProfile id)
 
@@ -199,18 +172,11 @@ object functional {
   }
   
   object email {
-    /**
-     * The email module.
-     */
     trait Email {
       def email: Email.Service 
     }
     object Email {
-      /**
-       * The email service.
-       */
       trait Service {
-        // def sendEmail(from: EmailAddress, to: EmailAddress)(subject: String, message: String): Unit
         def sendEmail(from: EmailAddress, to: EmailAddress)(subject: String, message: String): Task[Unit]
       }
       trait Live extends Email with Blocking {
