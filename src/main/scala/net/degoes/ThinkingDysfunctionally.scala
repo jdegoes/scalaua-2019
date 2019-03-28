@@ -44,7 +44,7 @@ object ThinkingDysfunctionally extends App {
       // Import all modules:
       import services._
 
-      val userId = auth.login(token)
+      val userIdTry = auth.login(token)
 
       val promise = Promise[Unit]()
 
@@ -52,14 +52,14 @@ object ThinkingDysfunctionally extends App {
       val counter = new AtomicInteger(0)
 
       // Try to log the user into the platform:
-      userId match {
+      userIdTry match {
         case Failure(t) => 
-          logging.log(s"Failed to log in $userId")
+          logging.log(s"Failed to log in $token")
 
           throw t 
 
         case Success(userId) =>
-          logging.log(s"Logged in $userId")
+          logging.log(s"Logged in $token")
 
           // Get the profile of the user:
           social.getProfile(userId)(userProfile =>
