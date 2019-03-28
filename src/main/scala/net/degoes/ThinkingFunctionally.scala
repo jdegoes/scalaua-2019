@@ -1,6 +1,7 @@
 package net.degoes
 
 import scalaz.zio._
+import scalaz.zio.duration._
 import scalaz.zio.console._
 import scalaz.zio.blocking._
 
@@ -78,6 +79,12 @@ object ThinkingFunctionally extends App {
    */
   def inviteFriends(token: AuthToken): ZIO[Services, Throwable, Receipt] =     
     ???
+
+  // Superpower #1: Composable timeouts
+  lazy val invitation1 = inviteFriends(???).timeout(60.seconds)
+
+  // Superpower #2: Lossless & localized errors w/auto propagation:
+  invitation1.flatMap(receipt => putStrLn(s"Receipt is $receipt"))
 
   /**
    * Describes the result of an email invitation. Either it failed with some
