@@ -7,33 +7,43 @@ import scalaz.zio.blocking._
 import Common._
 
 /**
- * Procedural effects do; functional effects describe.
+ * Procedural effects *do*; functional effects *describe*.
  * 
  * Procedural effect:
  * 
+ * {{{
  *   def println(line: String): Unit 
+ * }}}
  * 
  * Functional effect:
  * 
+ * {{{
  *   def println(line: String): Task[Unit]
+ * }}}
  * 
- * where `case class Task[A](unsafeRun: () => A)`
+ * where, for example, `case class Task[A](unsafeRun: () => A)`
  * 
  * ZIO's only functional effect type: 
  * 
+ * {{{
  *    ZIO[-R, +E, +A]
+ * }}}
  * 
  * Similar to a purely functional, but effectful version of this function:
  * 
+ * {{{
  *    R => Either[E, A]
+ * }}}
  * 
  * ZIO has type aliases to simplify common use cases:
  * 
+ * {{{
  *    type   UIO[+A] = ZIO[Any,   Nothing, A]
  *    type  Task[+A] = ZIO[Any, Throwable, A]
  * 
  *    type TaskR[-R, +A] = ZIO[  R, Throwable, A]
  *    type    IO[+E, +A] = ZIO[Any,         E, A]
+ * }}}
  */
 object ThinkingFunctionally extends App {
   import functional._
