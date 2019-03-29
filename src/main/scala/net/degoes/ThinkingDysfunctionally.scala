@@ -27,7 +27,7 @@ object ThinkingDysfunctionally extends App {
    * 1. Two thread pools are becoming exhausted non-deterministically.
    * 2. Errors that happen in the service don't always make it higher.
    * 3. The social and email services are randomly overloaded with requests.
-   * 4. BONUS: Product manager wants you to workaround flaky services.
+   * 4. BONUS: Product manager wants you to workaround flaky "getFriends" API.
    */
   class InvitationService(services: Services) {
     // Import all modules used by this service:

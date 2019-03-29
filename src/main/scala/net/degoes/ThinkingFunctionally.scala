@@ -1,9 +1,10 @@
 package net.degoes
 
 import scalaz.zio._
-import scalaz.zio.duration._
-import scalaz.zio.console._
 import scalaz.zio.blocking._
+import scalaz.zio.duration._
+import scalaz.zio.clock.Clock
+import scalaz.zio.console._
 
 import Common._
 
@@ -55,7 +56,7 @@ object ThinkingFunctionally extends App {
 
   def run(args: List[String]) = putStrLn("Hello World!").fold(_ => 1, _ => 0)
 
-  type Services = Logging with Social with Auth with Email with Blocking
+  type Services = Auth with Logging with Social with Clock with Email with Blocking
 
   /**
    * Your mission, should you choose to accept it:
@@ -138,7 +139,8 @@ object functional {
         val auth = new Service {
           // Implement this using Common.login:
           // Hint: blocking.interruptible
-          def login(token: AuthToken): Task[UserID] = ???
+          def login(token: AuthToken): Task[UserID] = 
+            ???
         }
       }
       object Live extends Live with Blocking.Live

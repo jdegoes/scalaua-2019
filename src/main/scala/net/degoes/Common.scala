@@ -3,6 +3,11 @@ package net.degoes
 import scala.concurrent._
 import scala.util.Try
 
+/**
+ * A bunch of random functions and data types from third-party libraries, some 
+ * Java, some Scala. These have been minimally cleaned up so they don't return 
+ * null, but they can throw exceptions.
+ */
 object Common {
   trait AuthToken
   trait UserID
