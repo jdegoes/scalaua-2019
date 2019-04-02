@@ -117,6 +117,7 @@ object functional {
       trait Live extends Logging {
         val logging = new Service {
           // Implement this using Common.log:
+          // Hint: UIO.effectTotal
           def log(message: String): UIO[Unit] = ???
         }
       }
@@ -139,8 +140,7 @@ object functional {
         val auth = new Service {
           // Implement this using Common.login:
           // Hint: blocking.interruptible
-          def login(token: AuthToken): Task[UserID] = 
-            ???
+          def login(token: AuthToken): Task[UserID] = ???
         }
       }
       object Live extends Live with Blocking.Live
@@ -163,11 +163,13 @@ object functional {
         val social = new Service {
           // Implement this using Common.getProfile:
           // Hint: ZIO.effectAsync
-          def getProfile(id: UserID): Task[UserProfile] = ???
+          def getProfile(id: UserID): Task[UserProfile] = 
+            ???
 
           // Implement this using Common.getFriends:
           // Hint: ZIO.fromFuture
-          def getFriends(id: UserID): Task[List[UserID]] = ???
+          def getFriends(id: UserID): Task[List[UserID]] = 
+            ???
         }
       }
       object Live extends Live
